@@ -1,20 +1,15 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-from torchvision import datasets, transforms
+from torchvision import datasets
 
 import numpy as np
 import cv2
-from sklearn.preprocessing import StandardScaler
 
 import tkinter as tk
 
-from digitRecogn2.geometric_props import calculate_geometric_features
-from digitRecogn2.model_arch import CNNGeoModel
+from digitRecogn2.utils.geometric_props import calculate_geometric_features
+from digitRecogn2.modelArchs.model_arch import CNNGeoModel
 
-label_map = datasets.EMNIST(root='./data', split='byclass', download=True).classes
+label_map = datasets.MNIST(root='./data', download=True).classes
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class DrawingApp:
@@ -80,19 +75,18 @@ class DrawingApp:
             outputs = self.model(img_tensor, geo_tensor)
             probs = torch.softmax(outputs, dim=1)
             prob_val, pred = torch.max(probs, 1)
-            pred = label_map[pred.item()]
+            # pred = label_map[pred.item()]
+            pred = pred.item()
 
         self.prediction_label.config(text=f"Cifra prezisă: {pred}")
         self.accuracy_label.config(text=f"Probabilitate: {prob_val.item()*100:.2f}%")
         self.drawing = False
 
-# Pentru a porni aplicația:
-
-model = CNNGeoModel(num_geo_features=7, num_classes=62)
+model = CNNGeoModel(num_geo_features=7, num_classes=10)
 model.load_state_dict(torch.load('./models/m1.pth', map_location=device))
 model.to(device)
-scaler = StandardScaler()
 
+# Pentru a porni aplicația:
 root = tk.Tk()
-app = DrawingApp(root, model, scaler)
+app = DrawingApp(root, model)
 root.mainloop()
